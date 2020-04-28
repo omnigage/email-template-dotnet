@@ -182,9 +182,17 @@ namespace omnigage_email_template
         static async Task<JObject> PatchRequest(HttpClient client, string uri, string content)
         {
             StringContent payload = new StringContent(content, Encoding.UTF8, "application/json");
-            HttpResponseMessage request = await client.PatchAsync(uri, payload);
-            string response = await request.Content.ReadAsStringAsync();
-            return JObject.Parse(response);
+
+            var method = new HttpMethod("PATCH");
+            var request = new HttpRequestMessage(method, uri)
+            {
+                Content = payload
+            };
+
+            HttpResponseMessage response = await client.SendAsync(request);
+
+            string responseContent = await request.Content.ReadAsStringAsync();
+            return JObject.Parse(responseContent);
         }
 
         /// <summary>
@@ -263,8 +271,16 @@ namespace omnigage_email_template
             // Set the content type (required by presigned URL)
             form.Add(new StringContent(mimeType), "Content-Type");
 
+            // Read file into result
+            byte[] result;
+            using (FileStream stream = File.Open(filePath, FileMode.Open))
+            {
+                result = new byte[stream.Length];
+                await stream.ReadAsync(result, 0, (int)stream.Length);
+            }
+
             // Add file content to form
-            ByteArrayContent fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
+            ByteArrayContent fileContent = new ByteArrayContent(result);
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
             form.Add(fileContent, "file", fileName);
 
@@ -316,7 +332,10 @@ namespace omnigage_email_template
         /// <returns>JSON</returns>
         static string CreateEmailTemplateSchema(string subject, string body, List<string> uploadIds = null)
         {
-            uploadIds ??= new List<string>();
+            if (uploadIds == null)
+            {
+                uploadIds = new List<string>();
+            }
 
             string uploadInstances = "";
             foreach (var uploadId in uploadIds)
