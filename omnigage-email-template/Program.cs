@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -26,9 +27,14 @@ namespace omnigage_email_template
             // API host path, only change if using sandbox (e.g., https://api.omnigage.io/api/v1/)
             string host = "";
 
+            // Optional - Proxy configuration
+            string proxyHost = "";
+            string proxyUser = "";
+            string proxyPass = "";
+
             // Local path to a PNG, JPG, or JPEG
             // On Mac, for example: "/Users/Shared/sample.png"
-            List<string> filePaths = new List<string> { "" };
+            List<string> filePaths = new List<string> { "/Users/Shared/lighting.jpg" };
 
             // Subject of the email template
             string subject = "Example with Images";
@@ -38,7 +44,7 @@ namespace omnigage_email_template
 
             try
             {
-                MainAsync(tokenKey, tokenSecret, accountKey, host, subject, body, filePaths).Wait();
+                MainAsync(tokenKey, tokenSecret, accountKey, host, subject, body, filePaths, proxyHost, proxyUser, proxyPass).Wait();
             }
             catch (Exception ex)
             {
@@ -53,11 +59,38 @@ namespace omnigage_email_template
         /// <param name="tokenSecret"></param>
         /// <param name="accountKey"></param>
         /// <param name="host"></param>
-        /// <param name="filePaths"></param>
+		/// <param name="subject"></param>
         /// <param name="body"></param>
-        static async Task MainAsync(string tokenKey, string tokenSecret, string accountKey, string host, string subject, string body, List<string> filePaths)
+        /// <param name="filePaths"></param>
+		/// <param name="proxyHost"></param>
+		/// <param name="proxyUser"></param>
+		/// <param name="proxyPass"></param>
+        static async Task MainAsync(string tokenKey, string tokenSecret, string accountKey, string host, string subject, string body, List<string> filePaths, string proxyHost, string proxyUser, string proxyPass)
         {
-            using (var client = new HttpClient())
+            WebProxy proxy = null;
+
+            if (proxyHost != "")
+			{
+                proxy = new WebProxy
+                {
+                    Address = new Uri(proxyHost),
+                    BypassProxyOnLocal = false,
+                    UseDefaultCredentials = false,
+
+                    Credentials = new NetworkCredential(
+                        userName: proxyUser,
+                        password: proxyPass)
+                };
+            }
+
+            var httpClientHandler = new HttpClientHandler();
+
+            if (proxy != null)
+			{
+                httpClientHandler.Proxy = proxy;
+			}
+
+            using (var client = new HttpClient(handler: httpClientHandler, disposeHandler: true))
             {
                 // Build basic authorization
                 string authorization = CreateAuthorization(tokenKey, tokenSecret);
