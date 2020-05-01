@@ -27,14 +27,14 @@ namespace omnigage_email_template
             // API host path, only change if using sandbox (e.g., https://api.omnigage.io/api/v1/)
             string host = "";
 
-            // Optional - Proxy configuration
+            // Optional - Proxy configuration (e.g., http://debugproxy.com:8080)
             string proxyHost = "";
             string proxyUser = "";
             string proxyPass = "";
 
             // Local path to a PNG, JPG, or JPEG
             // On Mac, for example: "/Users/Shared/sample.png"
-            List<string> filePaths = new List<string> { "/Users/Shared/lighting.jpg" };
+            List<string> filePaths = new List<string> { };
 
             // Subject of the email template
             string subject = "Example with Images";
@@ -99,6 +99,7 @@ namespace omnigage_email_template
                 client.BaseAddress = new Uri(host);
                 client.DefaultRequestHeaders.Add("Authorization", "Basic " + authorization);
                 client.DefaultRequestHeaders.Add("X-Account-Key", accountKey);
+                client.DefaultRequestHeaders.Add("User-Agent", "Omnigage Email Template Demo");
 
                 // A list of upload ids
                 List<string> uploadIds = new List<string> { };
